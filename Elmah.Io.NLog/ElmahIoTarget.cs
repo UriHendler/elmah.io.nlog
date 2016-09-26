@@ -39,7 +39,7 @@ namespace Elmah.Io.NLog
                 Severity = LevelToSeverity(logEvent.Level),
                 DateTime = logEvent.TimeStamp.ToUniversalTime(),
                 Detail = logEvent.Exception != null ? logEvent.Exception.ToString() : null,
-                Data = PropertiesToData(logEvent.Properties)
+                Data = PropertiesToData(logEvent),
                 Application = AppDomain.CurrentDomain.FriendlyName,
                 Source = logEvent.LoggerName,
                 Hostname = Environment.MachineName,
@@ -49,9 +49,24 @@ namespace Elmah.Io.NLog
             _logger.Log(message);
         }
 
-        private List<Item> PropertiesToData(IDictionary<object, object> properties)
+        private string Type(LogEventInfo logEvent)
         {
-            return properties.Keys.Select(key => new Item{Key = key.ToString(), Value = properties[key].ToString()}).ToList();
+            if (logEvent.Exception == null) return null;
+            return logEvent.Exception.GetType().FullName;
+        }
+
+        private List<Item> PropertiesToData(LogEventInfo logEvent)
+        {
+            var data = new List<Item>();
+            if (logEvent.Exception != null)
+            {
+                data.AddRange(
+                    logEvent.Exception.Data.Keys.Cast<object>()
+                        .Select(key => new Item { Key = key.ToString(), Value = logEvent.Exception.Data[key].ToString() }));
+            }
+
+            data.AddRange(logEvent.Properties.Select(p => new Item { Key = p.Key.ToString(), Value = p.Value.ToString() }));
+            return data;
         }
 
         private Severity? LevelToSeverity(LogLevel level)
