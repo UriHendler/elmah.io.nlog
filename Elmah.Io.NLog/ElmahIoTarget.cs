@@ -40,6 +40,10 @@ namespace Elmah.Io.NLog
                 DateTime = logEvent.TimeStamp.ToUniversalTime(),
                 Detail = logEvent.Exception != null ? logEvent.Exception.ToString() : null,
                 Data = PropertiesToData(logEvent.Properties)
+                Application = AppDomain.CurrentDomain.FriendlyName,
+                Source = logEvent.LoggerName,
+                Hostname = Environment.MachineName,
+                Type = Type(logEvent)
             };
 
             _logger.Log(message);
